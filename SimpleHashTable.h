@@ -15,7 +15,7 @@ class Map{
 public:
     typedef struct Node{
         KeyType Key;
-        ValuType Value;
+        ValueType Value;
     }Node;
 private:
     Node* Table;
@@ -41,16 +41,12 @@ public:
         Table[Address].Value = Value;
     }
 
-    void operator [] =(KeyType Key, ValueType Value){
-        Set(Key, Value);
-    }
-
-    ValueType Get(KeyType Key){
+    ValueType& Get(KeyType Key){
         int Address = Hash(Key);
         return Table[Address].Value;
     }
 
-    ValueType operator [](KeyType Key){
+    ValueType& operator [](KeyType Key){
         return Get(Key);
     }
 

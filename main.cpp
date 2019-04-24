@@ -8,7 +8,8 @@ int main(void) {
     map1.Set(418,32114);
     map1.Set(9,514);
     map1.Set(27,8917);
-    map1.Set(1031,286);
+    //map1.Set(1031,286);
+    map1[1031] = 286;
 
 
     printf("Key:%d\t\tValue:%d\n", 418 , map1.Get(418) );
