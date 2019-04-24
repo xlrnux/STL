@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include "SimpleHashTable.h"
 
-#define TABLESIZE 193
-
 int main() {
-    Map map1 = Map(TABLESIZE);
+    Map map1 = Map(193); // 193 is prime number
 
     map1.Set(418,32114);
     map1.Set(9,514);

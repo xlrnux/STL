@@ -1,0 +1,1 @@
+Simple STL for SWEA Type B Test
