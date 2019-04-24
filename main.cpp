@@ -2,7 +2,7 @@
 #include "SimpleHashTable.h"
 
 int main() {
-    Map map1 = Map(193); // 193 is prime number
+    Map map1 = Map(193); // 193 is prime number ho!!!
 
     map1.Set(418,32114);
     map1.Set(9,514);
