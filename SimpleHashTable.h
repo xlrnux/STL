@@ -89,9 +89,7 @@ public:
                     // 오버플로우 대비
                     ReSize();
                 }
-
             }
-
         }
     }
 
@@ -99,7 +97,7 @@ private:
     void ReSize(){
         SizeIdx++;
         TableSize = Prime[SizeIdx];
-        realloc(Table,sizeof(Node)*TableSize);
+        Table = (Node*)realloc(Table,sizeof(Node)*TableSize);
         for(int i = Prime[SizeIdx-1]; i < TableSize; i++)
             (Table + i)->Key = -1;
 

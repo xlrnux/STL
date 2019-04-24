@@ -3,4 +3,4 @@ project(STL)
 
 set(CMAKE_CXX_STANDARD 98)
 
-add_executable(STL main.cpp SimpleHashTable.h SimpleHashTable.cpp LinkedHashTable.h)
+add_executable(STL main.cpp SimpleHashTable.h SimpleHashTable.cpp)
