@@ -10,14 +10,15 @@
 
 typedef int KeyType;
 typedef int ValueType;
-class Map {
+
+class Map{
 public:
-    typedef struct Node {
+    typedef struct Node{
         KeyType Key;
-        ValueType Value;
+        ValuType Value;
     }Node;
 private:
-    Node *Table;
+    Node* Table;
     int TableSize;
 
 public:
@@ -39,14 +40,23 @@ public:
         Table[Address].Key = Key;
         Table[Address].Value = Value;
     }
+
+    void operator [] =(KeyType Key, ValueType Value){
+        Set(Key, Value);
+    }
+
     ValueType Get(KeyType Key){
         int Address = Hash(Key);
         return Table[Address].Value;
     }
-    ValueType operator[](KeyType Key){
+
+    ValueType operator [](KeyType Key){
         return Get(Key);
     }
+
+
 };
+
 
 
 #endif //STL_SIMPLEHASHTABLE_H
