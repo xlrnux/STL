@@ -5,12 +5,9 @@
 #ifndef STL_SIMPLEHASHTABLE_H
 #define STL_SIMPLEHASHTABLE_H
 
-//#include<stdio.h>
 #include<iostream>
-#include<malloc.h>
-
 static void print_Prime(){
-    int* _Prime = (int*)malloc(sizeof(int) * 15000000);
+    int* _Prime = new int[20];
     for(int i = 2; i < 15000000; i++){
         if(_Prime[i] == 0){
             for(int j = 2; i*j < 15000000; j++){
@@ -21,14 +18,15 @@ static void print_Prime(){
 
     for(int i = 10000; i < 15000000; i++){
         if(_Prime[i] == 0) {
-            printf("%d,", i);
+            std::cout << i << ",";
             i = i*2;
         }
     }
-    free(_Prime);
+    delete[] _Prime;
 }
 
-static int Prime[] = {10007,20021,40063,80141,160309,320627,641261,1282529,2565061,5130143,10260301};
+//static int Prime[] = {9,10007,20021,40063,80141,160309,320627,641261,1282529,2565061,5130143,10260301};
+static int Prime[] = {9,10007,20021,40063,80141,160309,320627,641261}; // 현실적인 사이즈
 class Map{
 public:
     typedef int KeyType;
@@ -36,71 +34,131 @@ public:
     typedef struct Node{
         KeyType Key;
         ValueType Value;
+        Node* Next;
+        /*
+        Node(){
+            Key = -1;
+            Next = NULL;
+        }
+         */
+
     }Node;
 private:
-    Node* Table;
-    int SizeIdx; // TableSize = Prime[SizeIdx]
-    int TableSize;
-    int UsedSize;
+    //int SizeIdx; // TableSize = Prime[SizeIdx]
+    const int TableSize = 20021;
+    Node Table[20021];
+    //int UsedSize;
+    //int newSizeIdx;
+    //int newTableSize;
 public:
     Map(){
-        this->UsedSize = 0;
-        this->SizeIdx = 0;
-        TableSize = Prime[SizeIdx];
-        Table = (Node*)malloc(sizeof(Node)*TableSize);
-        for(int i = 0; i < TableSize; i++)
-            (Table + i)->Key = -1;
+        //this->SizeIdx = 2; // 무난하게 20021 사이즈 = 2
+        //this->TableSize = Prime[SizeIdx];
+        //this->UsedSize = 0;
+        //this->newSizeIdx = 1;
+        //this->newTableSize = Prime[1];
+
+
+        //Table = new Node[TableSize];
+        //Table = (Node*)malloc(sizeof(Node)*TableSize);
+
+        for(int i = 0; i < TableSize; i++) {
+            //(Table + i)->Next = (Node*)malloc(sizeof(Node));
+            //(Table + i)->Key = -1;
+            //(Table + i)->Next = NULL;
+            Table[i].Key = -1;
+            Table[i].Next = NULL;
+            //(Table + i)->Next = new Node();
+            //(Table + i)->Next->Key = -1;
+        }
+
+
     }
     ~Map(){
-        free(Table);
+        for(int i = 0; i < this->TableSize; i++){
+            if(Table[i].Key == -1) continue;
+            Node* Current = Table[i].Next;
+            KeyType Key = Current->Key;
+            while( Current->Next != NULL ) {
+                Node* next = Current->Next;
+                Current->Next = NULL;
+                delete Current;
+                Current = next;
+            }
+            if(Current->Key == -1) delete Current;
+
+
+        }
     }
 
-    int Hash(KeyType Key, int reHash=0){
-        // 재해싱인 경우 reHash 가 0이 아닌 다른 수가
-        // 입력되어서 들어옴
-        // 원래 상정되어있는 TableSize 가 워낙 크기도 하고
-        // 그 큰 수가 0보다 작아질 때 까지 재해싱이
-        // 일어나면 그건 이미 해싱이 그냥 망한것.
-        // 그러니 예외처리는 안함
-        return Key % (TableSize-reHash) + reHash;
+    int GetTableSize(){
+        return this->TableSize;
+    }
+    int Hash(KeyType Key){
+        // Key 로부터 Address 를 계산
+        // Key 가 음수일 경우 재할당중이니 newTableSize 기준으로 나머지
+        //if(Key < 0) return Key % newTableSize; // 재할당중
+        return Key % TableSize;
     }
 
     ValueType& operator [](KeyType Key){
-        int reHash = 0;
-        int Address;
+
+        /*
+        if( (this->UsedSize)*1.0 >= TableSize*0.75){
+            // 총 용량의 75퍼센트 이상을 사용했다면?
+            // 생각해보니 체이닝해서 리사이즈 딱히 필요없음
+            ReSize();
+        }
+         */
+
+        int Address = Hash(Key);
+        //if(Key < 0) Key *= -1;// Key가 음수라면 재할당중 호출
+
         while(true){
-            Address = Hash(Key, reHash);
-            if(Table[Address].Key == Key){
-                Table[Address].Key = Key;
-                return Table[Address].Value;
-            }else if(Table[Address].Key == -1 ){
-                Table[Address].Key = Key;
-                this->UsedSize++;
-
-                if( (this->UsedSize)*1.0 >= TableSize*0.75){
-                    // 총 용량의 75퍼센트 이상을 사용했다면?
-                    ReSize();
-                }
-
-                return Table[Address].Value;
-            }else {
-                reHash += 2;
-                if(Hash(Key, reHash)>= TableSize){
-                    // 오버플로우 대비
-                    ReSize();
+            Node* Current = &Table[Address];
+            while(true) {
+                if (Current->Key == -1) {
+                    //this->UsedSize++;
+                    Current->Key = Key;
+                    Node* NewNode = new Node;
+                    NewNode->Key = -1;
+                    NewNode->Next = NULL;
+                    Current->Next = NewNode;
+                    return Current->Value;
+                } else if (Current->Key == Key) {
+                    return Current->Value;
+                } else {
+                    Current = Current->Next;
                 }
             }
         }
     }
 
 private:
-    void ReSize(){
-        SizeIdx++;
-        TableSize = Prime[SizeIdx];
-        Table = (Node*)realloc(Table,sizeof(Node)*TableSize);
-        for(int i = Prime[SizeIdx-1]; i < TableSize; i++)
-            (Table + i)->Key = -1;
+    void ReSize() {
+        /*
+        std::cout << "ReSized!!!\n";
+        Node* newTable = new Node[newTableSize];
 
+        for(int i = 0; i < TableSize; i++){
+            if(Table[i].Key == -1) continue;
+            Node* Current = Table[i].Next;
+            while(Current->Key != -1) {
+                newTable[(Current->Key)*-1] = Current->Value;
+                Node* next = Current->Next;
+                delete Current;
+                Current = next;
+            }
+        }
+
+        delete[] Table;
+
+        Table = newTable;
+        this->SizeIdx = this->newSizeIdx;
+        this->TableSize = this->newTableSize;
+        this->newSizeIdx = this->SizeIdx+1;
+        this->newTableSize = Prime[newSizeIdx];
+         */
     }
 };
 
