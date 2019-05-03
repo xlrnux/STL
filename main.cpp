@@ -32,5 +32,6 @@ void MapExp(){
 }
 int main(void) {
 
+    MapExp();
     return 0;
 }

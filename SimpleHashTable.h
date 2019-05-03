@@ -12,19 +12,27 @@ static void print_Prime(); // 소스 하단에 기술
 
 // TableSize (겸 해싱에서 나머지 연산의 피연산자로 사용될 목록)
 static int Prime[] = {10007,20021,40063,80141,160309,320627,641261}; // 현실적인 사이즈
+
+//====================================================================
+// 다음 목표는, 다시한번 클러스터에 의한 리사이징을 없애서 다이어트 예정
+// 체이닝을 없애면 bool find(Keytype Key)를 만들어서 Set Get [] 등에서
+// 유용하게 활용 가능. 코드를 더 줄일 수 있는 여지가 생김
+// https://github.com/baactree/Algorithm/blob/master/Stl/map.cpp 참고
+//====================================================================
+
+//template<typename KeyType, typename ValueType>
 class Map{
 public:
     typedef int KeyType; // Template 대신 아쉬운대로
     typedef int ValueType; // Template 대신 아쉬운대로
-
-    typedef struct Node{ // 우리의 주인공님
+    struct Node{ // 우리의 주인공님
         KeyType Key; // 진짜 키값
         ValueType Value; // 값
         Node* Next; // 체이닝을 위한 다음노드
         Node(){ // 자동 초기화. 아마 C에서는 못쓸듯
             this->Key = -1;
         }
-    }Node;
+    };
 private:
     int SizeIdx = 0; // TableSize = Prime[SizeIdx]
 
@@ -41,8 +49,8 @@ public:
     ~Map(){
         // 해시맵 동적할당 해제
         for(int i = 0; i < this->TableSize; i++){
-            if(Table[i].Next == NULL) continue; // 사용되지 않은 원소. 반드시 continue
-            Node* Current = Table[i].Next;
+            if(this->Table[i].Next == NULL) continue; // 사용되지 않은 원소. 반드시 continue
+            Node* Current = this->Table[i].Next;
             KeyType Key = Current->Key;
             while( Current != NULL ) {
                 Node* next = Current->Next;
@@ -51,22 +59,22 @@ public:
                 Current = next;
             }
         }
-        delete[] Table;
+        delete[] this->Table;
     }
 
     int Hash(KeyType Key){
         // Key 로부터 Address 를 계산
-        return Key % TableSize;
+        return Key % this->TableSize;
     }
 
     ValueType& operator [](KeyType Key){
         if( (this->UsedSize)*1.0 >= (this->TableSize)*0.75 // 총 용량의 75퍼센트 이상을 사용
-        || ChainFull){ // 체이닝이 너무 커짐
+        || this->ChainFull ){ // 체이닝이 너무 커짐
             ReSize();
         }
 
         int Address = Hash(Key);
-        Node* Current = &Table[Address];
+        Node* Current = &this->Table[Address];
 
         int chain = 0;
         while( Current->Next != NULL
@@ -78,7 +86,7 @@ public:
 
         // 체이닝이 아닌 최초 노드에 삽입 된 경우에는 UsedSize 를 더해준다
         if(chain == 0) this->UsedSize++;
-        if(chain >= ChainLimit) ChainFull = true;
+        if(chain >= this->ChainLimit) this->ChainFull = true;
 
         Current->Key = Key;
         Current->Next = new Node();
@@ -90,7 +98,7 @@ private:
         // 재 해싱할 때 옮기는 용도로만 사용함
         int chain = 0; // 체이닝 사이즈
         int Address = Hash(Key);
-        Node* Current = &Table[Address];
+        Node* Current = &this->Table[Address];
         while(Current->Next != NULL && ++chain){
             Current = Current->Next;
         }
@@ -98,20 +106,20 @@ private:
         Current->Value = Value;
         Current->Next = new Node();
         if(chain == 0) this->UsedSize++;
-        if(chain >= this->ChainLimit) ChainFull = true;
+        if(chain >= this->ChainLimit) this->ChainFull = true;
     }
 
     void ReSize() {
-        ChainFull = false;
-        ChainLimit *= 5;
+        this->ChainFull = false;
+        this->ChainLimit *= 5;
         if(DEBUG) std::cout << "ReSized!!!\n";
         // 매우 중요한 여섯줄. 이게 제대로 안되면 해싱이고 뭐고 죄다 망하는거
         this->SizeIdx++;
         this->oldTableSize = this->TableSize;
-        this->TableSize = Prime[SizeIdx];
+        this->TableSize = Prime[this->SizeIdx];
         this->UsedSize = 0; // 새로운 해싱이 일어나니 0으로 초기화
-        Node* oldTable = Table; // 기존 테이블의 데이터는 다른 곳에 백업
-        Table = new Node[TableSize];// 기존 테이블배열 머릿주소에 더 큰 공간을 할당해서 넣어줌
+        Node* oldTable = this->Table; // 기존 테이블의 데이터는 다른 곳에 백업
+        this->Table = new Node[this->TableSize];// 기존 테이블배열 머릿주소에 더 큰 공간을 할당해서 넣어줌
         // 매우 중요한 여섯줄 끝
 
         for(int i = 0; i < this->oldTableSize; i++){
