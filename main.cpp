@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "SimpleHashTable.h"
 
-int main(void) {
+void MapExp(){
     Map map1;
     map1.Stats();
 
@@ -29,15 +29,8 @@ int main(void) {
     map1[282+map1.GetTableSize()] = 166;
     map1[28+map1.GetTableSize()*4] = 466;
     map1.FullPrint();
-
-    /*
-    for(int i = 0; i < map1.GetTableSize(); i++){
-        if(map1[i] == 0 ) continue;
-        printf("%d %d\n", i, map1[i]);
-    }
-*/
-
-    //map1.FullPrint();
+}
+int main(void) {
 
     return 0;
 }
