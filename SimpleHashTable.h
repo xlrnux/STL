@@ -6,6 +6,7 @@
 #define STL_SIMPLEHASHTABLE_H
 
 #include<iostream>
+#define DEBUG 1
 static void print_Prime(){
     int* _Prime = new int[20];
     for(int i = 2; i < 15000000; i++){
@@ -35,46 +36,26 @@ public:
         KeyType Key;
         ValueType Value;
         Node* Next;
-        /*
-        Node(){
-            Key = -1;
-            Next = NULL;
-        }
-         */
-
     }Node;
 private:
-    //int SizeIdx; // TableSize = Prime[SizeIdx]
-    const int TableSize = 20021;
-    Node Table[20021];
-    //int UsedSize;
-    //int newSizeIdx;
-    //int newTableSize;
+    int SizeIdx = 0; // TableSize = Prime[SizeIdx]
+    int TableSize = Prime[SizeIdx];
+    Node* Table = new Node[TableSize];
+    int UsedSize = 0;
+    int newSizeIdx = 1;
+    int newTableSize = Prime[newSizeIdx];
+    int oldTableSize = 0;
+    int ChainLimit = 5;
+    bool rehash = false;
 public:
     Map(){
-        //this->SizeIdx = 2; // 무난하게 20021 사이즈 = 2
-        //this->TableSize = Prime[SizeIdx];
-        //this->UsedSize = 0;
-        //this->newSizeIdx = 1;
-        //this->newTableSize = Prime[1];
-
-
-        //Table = new Node[TableSize];
-        //Table = (Node*)malloc(sizeof(Node)*TableSize);
-
         for(int i = 0; i < TableSize; i++) {
-            //(Table + i)->Next = (Node*)malloc(sizeof(Node));
-            //(Table + i)->Key = -1;
-            //(Table + i)->Next = NULL;
             Table[i].Key = -1;
             Table[i].Next = NULL;
-            //(Table + i)->Next = new Node();
-            //(Table + i)->Next->Key = -1;
         }
-
-
     }
     ~Map(){
+
         for(int i = 0; i < this->TableSize; i++){
             if(Table[i].Key == -1) continue;
             Node* Current = Table[i].Next;
@@ -86,9 +67,8 @@ public:
                 Current = next;
             }
             if(Current->Key == -1) delete Current;
-
-
         }
+        delete[] Table;
     }
 
     int GetTableSize(){
@@ -97,33 +77,53 @@ public:
     int Hash(KeyType Key){
         // Key 로부터 Address 를 계산
         // Key 가 음수일 경우 재할당중이니 newTableSize 기준으로 나머지
-        //if(Key < 0) return Key % newTableSize; // 재할당중
+        // 키의 기본값이 -1인만큼 이것도 신경써야할듯
+        // 통상시에 키에 음수가 안들어 가도록 각별히 주의를 해야할듯
+        if(Key < 0) return (Key*-1) % newTableSize; // 재할당중
         return Key % TableSize;
     }
 
     ValueType& operator [](KeyType Key){
+        if( (this->UsedSize)*1.0 >= TableSize*0.75 // 총 용량의 75퍼센트 이상을 사용
+        || rehash){ // 체이닝이 너무 커짐
+            rehash = false;
+            if(DEBUG) std::cout << "ReSized!!!\n";
 
-        /*
-        if( (this->UsedSize)*1.0 >= TableSize*0.75){
-            // 총 용량의 75퍼센트 이상을 사용했다면?
-            // 생각해보니 체이닝해서 리사이즈 딱히 필요없음
+            this->oldTableSize = this->TableSize;
+            this->SizeIdx = this->newSizeIdx;
+            this->TableSize = this->newTableSize;
+            this->newSizeIdx = this->SizeIdx+1;
+            this->newTableSize = Prime[newSizeIdx];
             ReSize();
         }
-         */
+
 
         int Address = Hash(Key);
-        //if(Key < 0) Key *= -1;// Key가 음수라면 재할당중 호출
+        if(Key < 0) Key *= -1;// Key가 음수라면 재할당중 호출
+        // 키의 기본값이 -1인만큼 이것도 신경써야할듯
+        // 통상시에 키에 음수가 안들어 가도록 각별히 주의를 해야할듯
+
 
         while(true){
             Node* Current = &Table[Address];
-            while(true) {
-                if (Current->Key == -1) {
-                    //this->UsedSize++;
+            int turn = 0;
+            while(++turn) {
+                if (Current->Next == NULL) {
+                    if(turn > 1) {
+                        // 체이닝이 아닌 최초 노드에 삽입 된 경우에는 UsedSize 를 더해준다                        //
+                        this->UsedSize++;
+                        if(turn > ChainLimit) {
+                            ChainLimit *= 5;
+                            rehash = true;
+                        }
+                    }
                     Current->Key = Key;
                     Node* NewNode = new Node;
                     NewNode->Key = -1;
                     NewNode->Next = NULL;
                     Current->Next = NewNode;
+
+                    std::cout << turn << "\n";
                     return Current->Value;
                 } else if (Current->Key == Key) {
                     return Current->Value;
@@ -135,30 +135,39 @@ public:
     }
 
 private:
+    int minus(int num){
+        return num*-1;
+    }
     void ReSize() {
-        /*
-        std::cout << "ReSized!!!\n";
-        Node* newTable = new Node[newTableSize];
 
-        for(int i = 0; i < TableSize; i++){
-            if(Table[i].Key == -1) continue;
-            Node* Current = Table[i].Next;
-            while(Current->Key != -1) {
-                newTable[(Current->Key)*-1] = Current->Value;
+        Node* oldTable = Table;
+        Table = new Node[TableSize];
+
+        for(int i = 0; i < TableSize; i++) {
+            Table[i].Key = -1;
+            Table[i].Next = NULL;
+        }
+
+        int Address;
+        for(int i = 0; i < this->oldTableSize; i++){
+            if((oldTable[i]).Key == -1) continue;
+            Address = Hash( minus(oldTable[i].Key) );
+            Table[Address].Value = (oldTable[i]).Value;
+
+            Node* Current = (oldTable[i]).Next;
+            KeyType Key = Current->Key;
+            while( Current->Next != NULL ) {
+                Address = Hash( minus(Current->Key) );
+                Table[Address].Value = Current->Value;
+
                 Node* next = Current->Next;
+                Current->Next = NULL;
                 delete Current;
                 Current = next;
             }
+            if(Current->Key == -1) delete Current;
         }
-
-        delete[] Table;
-
-        Table = newTable;
-        this->SizeIdx = this->newSizeIdx;
-        this->TableSize = this->newTableSize;
-        this->newSizeIdx = this->SizeIdx+1;
-        this->newTableSize = Prime[newSizeIdx];
-         */
+        delete[] (oldTable);
     }
 };
 

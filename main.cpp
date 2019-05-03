@@ -4,7 +4,7 @@
 
 
 int main(void) {
-    Map map1 = Map();
+    Map map1;
 
 
     map1[418] = 32114;
@@ -47,18 +47,6 @@ int main(void) {
     map1[282+map1.GetTableSize()*2] = 276;
     map1[282+map1.GetTableSize()*3] = 376;
     map1[28+map1.GetTableSize()*4] = 476;
-
-    //delete map1;
-
-    Map* map2 = new Map();
-    Map** map3 = &map2;
-    (*map2)[20] = 30;
-    (**map3)[20] = 40;
-    printf("%d\n", (*map2)[20]);
-
-
-
-    delete map2;
 
     return 0;
 }
