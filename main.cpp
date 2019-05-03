@@ -6,7 +6,6 @@
 int main(void) {
     Map map1;
 
-
     map1[418] = 32114;
     map1[9] = 514;
     map1[27] = 8917;

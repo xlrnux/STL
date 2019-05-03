@@ -7,6 +7,7 @@
 
 #include<iostream>
 #define DEBUG 1
+// 그냥 Prime 배열을 만들기 위해 덤으로 만든 함수
 static void print_Prime(){
     int* _Prime = new int[20];
     for(int i = 2; i < 15000000; i++){
@@ -27,12 +28,13 @@ static void print_Prime(){
 }
 
 //static int Prime[] = {9,10007,20021,40063,80141,160309,320627,641261,1282529,2565061,5130143,10260301};
+// TableSize (겸 해싱에서 나머지 연산의 피연산자로 사용될 목록)
 static int Prime[] = {9,10007,20021,40063,80141,160309,320627,641261}; // 현실적인 사이즈
 class Map{
 public:
-    typedef int KeyType;
-    typedef int ValueType;
-    typedef struct Node{
+    typedef int KeyType; // Template 대신 아쉬운대로
+    typedef int ValueType; // Template 대신 아쉬운대로
+    typedef struct Node{ // 우리의 주인공님
         KeyType Key;
         ValueType Value;
         Node* Next;
@@ -50,12 +52,11 @@ private:
 public:
     Map(){
         for(int i = 0; i < TableSize; i++) {
-            Table[i].Key = -1;
-            Table[i].Next = NULL;
+            Table[i] = (Node){-1,-1,NULL};
         }
     }
-    ~Map(){
 
+    ~Map(){
         for(int i = 0; i < this->TableSize; i++){
             if(Table[i].Key == -1) continue;
             Node* Current = Table[i].Next;
@@ -87,8 +88,8 @@ public:
         if( (this->UsedSize)*1.0 >= TableSize*0.75 // 총 용량의 75퍼센트 이상을 사용
         || rehash){ // 체이닝이 너무 커짐
             rehash = false;
+            ChainLimit *= 5;
             if(DEBUG) std::cout << "ReSized!!!\n";
-
             this->oldTableSize = this->TableSize;
             this->SizeIdx = this->newSizeIdx;
             this->TableSize = this->newTableSize;
@@ -108,12 +109,13 @@ public:
             Node* Current = &Table[Address];
             int turn = 0;
             while(++turn) {
-                if (Current->Next == NULL) {
+                if (Current->Key == Key) {
+                    return Current->Value;
+                } else if (Current->Next == NULL) {
                     if(turn > 1) {
                         // 체이닝이 아닌 최초 노드에 삽입 된 경우에는 UsedSize 를 더해준다                        //
                         this->UsedSize++;
                         if(turn > ChainLimit) {
-                            ChainLimit *= 5;
                             rehash = true;
                         }
                     }
@@ -122,12 +124,9 @@ public:
                     NewNode->Key = -1;
                     NewNode->Next = NULL;
                     Current->Next = NewNode;
-
-                    std::cout << turn << "\n";
+                    if(DEBUG) std::cout << turn << "\n";
                     return Current->Value;
-                } else if (Current->Key == Key) {
-                    return Current->Value;
-                } else {
+                }  else {
                     Current = Current->Next;
                 }
             }
